@@ -33,23 +33,23 @@ import (
 var directDealAllocate = &cli.Command{
 	Name:        "allocate",
 	Usage:       "Create new allocation[s] for verified deals",
-	Description: "The command can accept a CSV formatted file in the format 'pieceCid,pieceSize,miner,tmin,tmax,expiration'.\n   Gas parameters (--gas-limit, --gas-fee-cap, --gas-premium, --max-fee) can be set to optimize transaction confirmation speed",
+	Description: "The command can accept a CSV formatted file in the format 'pieceCid,pieceSize,miner,tmin,tmax,expiration'.\n   Gas parameters (--gas-limit, --gas-fee-cap, --gas-premium, --max-fee) can be set to optimize transaction confirmation speed.\n   All gas values should be specified in attoFIL (e.g., \"1000000000\" for 1 nanoFIL, without unit suffix).",
 	Flags: []cli.Flag{
 		&cli.Int64Flag{
 			Name:  "gas-limit",
 			Usage: "set gas limit for the message (optional, will be estimated if not provided)",
 		},
 		&cli.StringFlag{
-			Name:  "gas-fee-cap",
-			Usage: "set gas fee cap for the message (attoFIL/GasUnit, optional). Example: 1000000000 or 1 nFIL",
+			Name:  "gas-feecap",
+			Usage: "set gas fee cap for the message in attoFIL (optional). Example: \"1000000000\" for 1 nanoFIL",
 		},
 		&cli.StringFlag{
 			Name:  "gas-premium",
-			Usage: "set gas premium for the message (attoFIL/GasUnit, optional). Higher values will make transaction mine faster",
+			Usage: "set gas premium for the message in attoFIL (optional). Higher values will make transaction mine faster. Example: \"1000000\"",
 		},
 		&cli.StringFlag{
 			Name:  "max-fee",
-			Usage: "set the maximum fee for the message (attoFIL, optional). The maximum amount you're willing to pay",
+			Usage: "set the maximum fee for the message in attoFIL (optional). The maximum amount you're willing to pay. Example: \"10000000000\"",
 		},
 		&cli.StringSliceFlag{
 			Name:    "miner",
@@ -320,34 +320,31 @@ var directDealAllocate = &cli.Command{
 			var gasFeeCap, gasPremium *big.Int
 			
 			if cctx.IsSet("max-fee") {
-				fee, err := types.ParseFIL(cctx.String("max-fee"))
+				mf, err := types.BigFromString(cctx.String("max-fee"))
 				if err != nil {
 					return fmt.Errorf("parsing max-fee: %w", err)
 				}
-				feeAbi := abi.TokenAmount(fee)
-				maxFee = &feeAbi
+				maxFee = &mf
 			}
 			
 			if cctx.IsSet("gas-limit") {
 				gasLimit = cctx.Int64("gas-limit")
 			}
 			
-			if cctx.IsSet("gas-fee-cap") {
-				fee, err := types.ParseFIL(cctx.String("gas-fee-cap"))
+			if cctx.IsSet("gas-feecap") {
+				gfc, err := types.BigFromString(cctx.String("gas-feecap"))
 				if err != nil {
-					return fmt.Errorf("parsing gas-fee-cap: %w", err)
+					return fmt.Errorf("parsing gas-feecap: %w", err)
 				}
-				feeAbi := abi.TokenAmount(fee)
-				gasFeeCap = &feeAbi
+				gasFeeCap = &gfc
 			}
 			
 			if cctx.IsSet("gas-premium") {
-				premium, err := types.ParseFIL(cctx.String("gas-premium"))
+				gp, err := types.BigFromString(cctx.String("gas-premium"))
 				if err != nil {
 					return fmt.Errorf("parsing gas-premium: %w", err)
 				}
-				premiumAbi := abi.TokenAmount(premium)
-				gasPremium = &premiumAbi
+				gasPremium = &gp
 			}
 			
 			mcid, sent, err := lib.SignAndPushToMpoolWithGas(cctx, ctx, gapi, n, ds, msg, maxFee, gasLimit, gasFeeCap, gasPremium)

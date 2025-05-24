@@ -134,6 +134,14 @@ func getLegacyDealsFSM(ctx context.Context, ds *backupds.Datastore) (fsm.Group, 
 	return deals, err
 }
 
+// SignAndPushToMpoolWithGas signs a message with custom gas parameters and pushes it to the message pool.
+// Parameters:
+//   - maxFee: maximum fee in attoFIL the sender is willing to pay (optional)
+//   - gasLimit: gas limit for the message (optional, will be estimated if not set)
+//   - gasFeeCap: gas fee cap in attoFIL per gas unit (optional)
+//   - gasPremium: gas premium in attoFIL per gas unit, higher values will make transactions mine faster (optional)
+//
+// Returns the message CID, whether it was sent, and any error that occurred.
 func SignAndPushToMpoolWithGas(cctx *cli.Context, ctx context.Context, api api.Gateway, n *clinode.Node, ds *ds_sync.MutexDatastore, msg *types.Message, maxFee *big.Int, gasLimit int64, gasFeeCap, gasPremium *big.Int) (cid cid.Cid, sent bool, err error) {
 	if ds == nil {
 		ds = ds_sync.MutexWrap(datastore.NewMapDatastore())
