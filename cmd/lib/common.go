@@ -162,6 +162,12 @@ func SignAndPushToMpoolWithGas(cctx *cli.Context, ctx context.Context, api api.G
 		spec.MaxFee = abi.NewTokenAmount(1000000000) // 1 nFIL default
 	}
 
+	msg, err = api.GasEstimateMessageGas(ctx, msg, spec, types.EmptyTSK)
+	if err != nil {
+		err = fmt.Errorf("GasEstimateMessageGas error: %w", err)
+		return
+	}
+
 	// Apply gas parameters before estimation if provided
 	if gasLimit > 0 {
 		msg.GasLimit = gasLimit
@@ -171,15 +177,6 @@ func SignAndPushToMpoolWithGas(cctx *cli.Context, ctx context.Context, api api.G
 	}
 	if gasPremium != nil {
 		msg.GasPremium = *gasPremium
-	}
-
-	// Only estimate if gasLimit is not set
-	if msg.GasLimit == 0 {
-		msg, err = api.GasEstimateMessageGas(ctx, msg, spec, types.EmptyTSK)
-		if err != nil {
-			err = fmt.Errorf("GasEstimateMessageGas error: %w", err)
-			return
-		}
 	}
 
 	// If gasFeeCap is not set, use basefee + 20%
