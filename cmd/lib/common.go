@@ -149,7 +149,7 @@ func SignAndPushToMpoolWithGas(cctx *cli.Context, ctx context.Context, api api.G
 	// Apply custom gas parameters if provided
 	spec := &lapi.MessageSendSpec{}
 	if maxFee != nil {
-		spec.MaxFee = big.Int(maxFee)
+		spec.MaxFee = *maxFee
 	} else {
 		spec.MaxFee = abi.NewTokenAmount(1000000000) // 1 nFIL default
 	}
@@ -159,10 +159,10 @@ func SignAndPushToMpoolWithGas(cctx *cli.Context, ctx context.Context, api api.G
 		msg.GasLimit = gasLimit
 	}
 	if gasFeeCap != nil {
-		msg.GasFeeCap = big.Int(gasFeeCap)
+		msg.GasFeeCap = *gasFeeCap
 	}
 	if gasPremium != nil {
-		msg.GasPremium = big.Int(gasPremium)
+		msg.GasPremium = *gasPremium
 	}
 
 	// Only estimate if gasLimit is not set

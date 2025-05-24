@@ -323,7 +323,8 @@ var directDealAllocate = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("parsing max-fee: %w", err)
 				}
-				maxFee = big.Int(fee)
+				feeAbi := abi.TokenAmount(fee)
+				maxFee = &feeAbi
 			}
 			
 			if cctx.IsSet("gas-limit") {
@@ -335,7 +336,8 @@ var directDealAllocate = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("parsing gas-fee-cap: %w", err)
 				}
-				gasFeeCap = big.Int(fee)
+				feeAbi := abi.TokenAmount(fee)
+				gasFeeCap = &feeAbi
 			}
 			
 			if cctx.IsSet("gas-premium") {
@@ -343,7 +345,8 @@ var directDealAllocate = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("parsing gas-premium: %w", err)
 				}
-				gasPremium = big.Int(premium)
+				premiumAbi := abi.TokenAmount(premium)
+				gasPremium = &premiumAbi
 			}
 			
 			mcid, sent, err := lib.SignAndPushToMpoolWithGas(cctx, ctx, gapi, n, ds, msg, maxFee, gasLimit, gasFeeCap, gasPremium)
