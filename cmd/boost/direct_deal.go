@@ -32,8 +32,24 @@ import (
 var directDealAllocate = &cli.Command{
 	Name:        "allocate",
 	Usage:       "Create new allocation[s] for verified deals",
-	Description: "The command can accept a CSV formatted file in the format 'pieceCid,pieceSize,miner,tmin,tmax,expiration'",
+	Description: "The command can accept a CSV formatted file in the format 'pieceCid,pieceSize,miner,tmin,tmax,expiration'.\n   Gas parameters (--gas-limit, --gas-fee-cap, --gas-premium, --max-fee) can be set to optimize transaction confirmation speed",
 	Flags: []cli.Flag{
+		&cli.Int64Flag{
+			Name:  "gas-limit",
+			Usage: "set gas limit for the message (optional, will be estimated if not provided)",
+		},
+		&cli.StringFlag{
+			Name:  "gas-fee-cap",
+			Usage: "set gas fee cap for the message (attoFIL/GasUnit, optional). Example: 1000000000 or 1 nFIL",
+		},
+		&cli.StringFlag{
+			Name:  "gas-premium",
+			Usage: "set gas premium for the message (attoFIL/GasUnit, optional). Higher values will make transaction mine faster",
+		},
+		&cli.StringFlag{
+			Name:  "max-fee",
+			Usage: "set the maximum fee for the message (attoFIL, optional). The maximum amount you're willing to pay",
+		},
 		&cli.StringSliceFlag{
 			Name:    "miner",
 			Usage:   "storage provider address[es]",
@@ -293,8 +309,44 @@ var directDealAllocate = &cli.Command{
 		var mcids []cid.Cid
 
 		ds := ds_sync.MutexWrap(datastore.NewMapDatastore())
+		
 		for _, msg := range msgs {
-			mcid, sent, err := lib.SignAndPushToMpool(cctx, ctx, gapi, n, ds, msg)
+
+			
+			// Parse gas parameters if provided
+			var maxFee *big.Int
+			var gasLimit int64
+			var gasFeeCap, gasPremium *big.Int
+			
+			if cctx.IsSet("max-fee") {
+				fee, err := types.ParseFIL(cctx.String("max-fee"))
+				if err != nil {
+					return fmt.Errorf("parsing max-fee: %w", err)
+				}
+				maxFee = big.Int(fee)
+			}
+			
+			if cctx.IsSet("gas-limit") {
+				gasLimit = cctx.Int64("gas-limit")
+			}
+			
+			if cctx.IsSet("gas-fee-cap") {
+				fee, err := types.ParseFIL(cctx.String("gas-fee-cap"))
+				if err != nil {
+					return fmt.Errorf("parsing gas-fee-cap: %w", err)
+				}
+				gasFeeCap = big.Int(fee)
+			}
+			
+			if cctx.IsSet("gas-premium") {
+				premium, err := types.ParseFIL(cctx.String("gas-premium"))
+				if err != nil {
+					return fmt.Errorf("parsing gas-premium: %w", err)
+				}
+				gasPremium = big.Int(premium)
+			}
+			
+			mcid, sent, err := lib.SignAndPushToMpoolWithGas(cctx, ctx, gapi, n, ds, msg, maxFee, gasLimit, gasFeeCap, gasPremium)
 			if err != nil {
 				return err
 			}
